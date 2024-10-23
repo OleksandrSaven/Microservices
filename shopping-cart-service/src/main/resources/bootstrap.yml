@@ -1,0 +1,7 @@
+spring:
+  application:
+    name: shopping-cart-app
+  cloud:
+    config:
+      uri: ${CONFIG_URI:http://localhost:8888}
+      fail-fast: true

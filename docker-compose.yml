@@ -1,0 +1,175 @@
+version: '3.8'
+services:
+  gateway-service:
+    build: ./gateway-service
+    restart: on-failure
+    ports:
+      - "${GATEWAY_HOST_PORT}:${GATEWAY_CONTAINER_PORT}"
+    environment:
+      EUREKA_HOST: ${EUREKA_HOST}
+      EUREKA_PORT: ${EUREKA_CONTAINER_PORT}
+    networks:
+      - net
+
+  config-service:
+    build: ./config-service
+    restart: on-failure
+    environment:
+      ENCRYPT_KEY: my-secret-key
+    ports:
+      - "${CONFIG_HOST_PORT}:${CONFIG_CONTAINER_PORT}"
+    networks:
+      - net
+
+  discovery-service:
+    build: ./discovery-service
+    restart: on-failure
+    ports:
+      - "${EUREKA_HOST_PORT}:${EUREKA_CONTAINER_PORT}"
+    networks:
+      - net
+
+  user-db:
+    platform: linux/x86_64
+    image: mysql:8
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_USERDB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_USERDB_DATABASE}
+    ports:
+      - "${MYSQL_USERDB_HOST_PORT}:${MYSQL_USERDB_CONTAINER_PORT}"
+    networks:
+      - net
+
+  user-service:
+    build: ./user_service
+    restart: on-failure
+    environment:
+      CONFIG_URI: ${CONFIG_URI}
+      USERDB_HOST: user-db
+      USERDB_PORT: ${USERDB_PORT}
+      USERDB_NAME: ${USERDB_NAME}
+      USERDB_USERNAME: ${USERDB_USERNAME}
+      USERDB_PASSWORD: ${USERDB_PASSWORD}
+
+      EUREKA_HOST: ${EUREKA_HOST}
+      EUREKA_PORT: ${EUREKA_CONTAINER_PORT}
+
+      GATEWAY_HOST: ${GATEWAY_HOST}
+      GATEWAY_PORT: ${GATEWAY_CONTAINER_PORT}
+
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION: ${JWT_EXPIRATION}
+
+    depends_on:
+      - config-service
+      - user-db
+    networks:
+      - net
+
+  book-db:
+    image: postgres:13
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${BOOKDB_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${BOOKDB_POSTGRES_PASSWORD}
+      POSTGRES_DB: ${BOOKDB_NAME}
+    ports:
+      - ${BOOKDB_POSTGRES_HOST_PORT}:${BOOKDB_POSTGRES_CONTAINER_PORT}
+    networks:
+      - net
+
+  book-service:
+    build: ./book-service
+    restart: on-failure
+    environment:
+      CONFIG_URI: ${CONFIG_URI}
+      BOOKDB_HOST: book-db
+      BOOKDB_PORT: ${BOOKDB_PORT}
+      BOOKDB_NAME: ${BOOKDB_NAME}
+      BOOKDB_POSTGRES_USER: ${BOOKDB_POSTGRES_USER}
+      BOOKDB_POSTGRES_PASSWORD: ${BOOKDB_POSTGRES_PASSWORD}
+
+      EUREKA_HOST: ${EUREKA_HOST}
+      EUREKA_PORT: ${EUREKA_CONTAINER_PORT}
+
+      GATEWAY_HOST: ${GATEWAY_HOST}
+      GATEWAY_PORT: ${GATEWAY_CONTAINER_PORT}
+    depends_on:
+      - config-service
+      - book-db
+      - discovery-service
+    networks:
+      - net
+
+  cart-db:
+    image: mysql:8
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${CARTDB_PASSWORD}
+      MYSQL_DATABASE: ${CARTDB_NAME}
+    ports:
+      - "${CARTDB_HOST_PORT}:${CARTDB_CONTAINER_PORT}"
+    networks:
+      - net
+
+  cart-service:
+    build: ./shopping-cart-service
+    restart: on-failure
+    environment:
+      CONFIG_URI: ${CONFIG_URI}
+      CARTDB_HOST: cart-db
+      CARTDB_PORT: ${CARTDB_PORT}
+      CARTDB_NAME: ${CARTDB_NAME}
+      CARTDB_USERNAME: ${CARTDB_USERNAME}
+      CARTDB_PASSWORD: ${CARTDB_PASSWORD}
+
+      EUREKA_HOST: ${EUREKA_HOST}
+      EUREKA_PORT: ${EUREKA_CONTAINER_PORT}
+
+      GATEWAY_HOST: ${GATEWAY_HOST}
+      GATEWAY_PORT: ${GATEWAY_CONTAINER_PORT}
+    depends_on:
+      - config-service
+      - cart-db
+      - discovery-service
+    networks:
+      - net
+
+  order-db:
+    image: mysql:8
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${ORDERDB_PASSWORD}
+      MYSQL_DATABASE: ${ORDERDB_NAME}
+    ports:
+      - "${ORDERDB_HOST_PORT}:${ORDERDB_CONTAINER_PORT}"
+    networks:
+      - net
+
+  order-service:
+    build: ./order-service
+    restart: on-failure
+    environment:
+      CONFIG_URI: ${CONFIG_URI}
+      ORDERBD_HOST: order-db
+      ORDERDB_PORT: ${ORDERDB_PORT}
+      ORDERDB_NAME: ${ORDERDB_NAME}
+      ORDERDB_USERNAME: ${ORDERDB_USERNAME}
+      ORDERDB_PASSWORD: ${ORDERDB_PASSWORD}
+
+      EUREKA_HOST: ${EUREKA_HOST}
+      EUREKA_PORT: ${EUREKA_CONTAINER_PORT}
+
+      GATEWAY_HOST: ${GATEWAY_HOST}
+      GATEWAY_PORT: ${GATEWAY_CONTAINER_PORT}
+    depends_on:
+      - config-service
+      - order-db
+      - discovery-service
+    networks:
+      - net
+
+networks:
+  net:
+    driver: bridge

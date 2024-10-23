@@ -1,0 +1,126 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /
+
+jwt:
+  secret: foottakemeetexampleproopervendor
+
+eureka:
+  client:
+    service-url:
+      defaultZone:  http://${EUREKA_HOST:discovery-service}:${EUREKA_PORT:8761}/eureka
+  instance:
+    prefer-ip-address: true
+
+springdoc:
+  enable-native-support: true
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui/index.html
+    config-url: /v3/api-docs/swagger-config
+    urls:
+      - url: /book-app/v3/api-docs
+        name: Book Service
+        primaryName: Book Service
+      - url: /user-app/v3/api-docs
+        name: User Service
+        primaryName: User Service
+      - url: /shopping-cart-app/v3/api-docs
+        name: Cart Service
+        primaryName: Cart Service
+      - url: /order-app/v3/api-docs
+        name: Order Service
+        primaryName: Order Service
+
+spring:
+  application:
+    name: gateway-service
+
+  main:
+    web-application-type: reactive
+
+  cloud:
+    gateway:
+      enabled: true
+      routes:
+        - id: book-service-swagger-route
+          uri: lb://BOOK-APP
+          predicates:
+            - Path=/book-app/v3/api-docs
+            - Method=GET
+
+        - id: user-service-swagger-route
+          uri: lb://USER-APP
+          predicates:
+            - Path=/user-app/v3/api-docs
+            - Method=GET
+
+        - id: cart-service-swagger-route
+          uri: lb://SHOPPING-CART-APP
+          predicates:
+            - Path=/shopping-cart-app/v3/api-docs
+            - Method=GET
+
+        - id: order-service-swagger-route
+          uri: lb://ORDER-APP
+          predicates:
+            - Path=/order-app/v3/api-docs
+            - Method=GET
+
+        - id: book-route
+          uri: lb://BOOK-APP
+          predicates:
+            - Path=/api/books/**
+          filters:
+            - name: AuthenticationFilter
+              args:
+                role:
+                  - ADMIN
+                  - CUSTOMER
+
+        - id: category-route
+          uri: lb://BOOK-APP
+          predicates:
+            - Path=/api/category/**
+          filters:
+            - name: AuthenticationFilter
+              args:
+                role:
+                  - ADMIN
+                  - CUSTOMER
+
+        - id: auth-route
+          uri: lb://USER-APP
+          predicates:
+            - Path=/api/auth/**
+
+        - id: user-route
+          uri: lb://USER-APP
+          predicates:
+            - Path=/api/user/**
+
+
+        - id: shopping-route
+          uri: lb://shopping-cart-app
+          predicates:
+            - Path=/api/cart/**
+          filters:
+            - name: AuthenticationFilter
+              args:
+                role:
+                  - ADMIN
+                  - CUSTOMER
+
+        - id: order-route
+          uri: lb://order-app
+          predicates:
+            - Path=/api/orders/**
+          filters:
+            - name: AuthenticationFilter
+              args:
+                role:
+                  - ADMIN
+                  - CUSTOMER
