@@ -5,9 +5,9 @@ server:
 
 spring:
   datasource:
-    url: jdbc:postgresql://${BOOKDB_HOST:localhost}:${BOOKDB_PORT:5432}/${BOOKDB_NAME:bookservicedb}
-    username: ${BOOKDB_POSTGRES_USER:postgres}
-    password: ${BOOKDB_POSTGRES_PASSWORD:1234}
+    url: jdbc:postgresql://${BOOKDB_HOST:localhost}:${BOOKDB_PORT:5434}/${BOOKDB_NAME:bookdb}
+    username: ${BOOKDB_POSTGRES_USER:admin}
+    password: ${BOOKDB_POSTGRES_PASSWORD:admin}
   liquibase:
     enabled: true
 

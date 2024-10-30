@@ -99,6 +99,8 @@ services:
       - config-service
       - book-db
       - discovery-service
+    deploy:
+      replicas: 3
     networks:
       - net
 
